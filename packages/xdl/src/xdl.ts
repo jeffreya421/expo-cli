@@ -127,6 +127,12 @@ export { Simulator };
 import * as ThirdParty from './ThirdParty';
 export { ThirdParty };
 
+import TurtleApi from './TurtleApi';
+export { TurtleApi };
+
+import TurtleConfig from './TurtleConfig';
+export { TurtleConfig };
+
 import * as UpdateVersions from './tools/UpdateVersions';
 export { UpdateVersions };
 

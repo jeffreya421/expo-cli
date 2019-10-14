@@ -3,6 +3,7 @@ import { Command } from 'commander';
 const COMMANDS = [
   require('./android'),
   require('./build'),
+  require('./build-native'),
   require('./bundle-assets'),
   require('./client'),
   require('./credentials'),
