@@ -20,17 +20,6 @@ interface XDLConfig {
     host: string;
     port: number | null;
   };
-  ngrok: {
-    authToken: string;
-    authTokenPublicId: string;
-    domain: string;
-  };
-  developerTool: string | null;
-  validation: {
-    reactNativeVersionWarnings: boolean;
-  };
-  helpUrl: string;
-  offline: boolean;
 }
 
 const config: XDLConfig = {
@@ -38,18 +27,7 @@ const config: XDLConfig = {
     scheme,
     host,
     port,
-  },
-  ngrok: {
-    authToken: '5W1bR67GNbWcXqmxZzBG1_56GezNeaX6sSRvn8npeQ8',
-    authTokenPublicId: '5W1bR67GNbWcXqmxZzBG1',
-    domain: 'exp.direct',
-  },
-  developerTool: null,
-  validation: {
-    reactNativeVersionWarnings: true,
-  },
-  helpUrl: 'https://docs.expo.io/',
-  offline: false,
+  }
 };
 
 export default config;

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 
 import log from '../../log';
-import BaseBuilder, { StatusResult, BuildsStatus } from './BaseBuilder';
+import BaseBuilder, { StatusResult } from './BaseBuilder';
 
 export type Options = {
   platform: 'android' | 'ios';
@@ -11,8 +11,8 @@ export type Options = {
 
 async function buildAction(projectDir: string, options: Options) {
   const builder = new BaseBuilder(projectDir, options);
-  await builder.postBuild(projectDir, options);
-  log('Build posted.');
+  const response = await builder.postBuild(projectDir, options);
+  log(response.buildRequestId);
 }
 
 async function statusAction(projectDir: string) {
@@ -24,7 +24,7 @@ async function statusAction(projectDir: string) {
 export default function (program: Command) {
   program
     .command('build-native [project-dir]')
-    .description('Turtle-v2 build command')
+    .description('Build a standalone APK/IPA or App Bundle for your project, signed and ready for submission to the Google Play Store / App Store.')
     .option('-p --platform <platform>', 'Platform: [android|ios]', /^(android|ios)$/i)
     .option('-t --type <type>', 'Type: [generic|managed|]', /^(generic|managed)$/i)
     .asyncActionProjectDir(buildAction, /* skipProjectValidation: */ true);

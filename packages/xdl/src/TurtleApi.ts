@@ -1,12 +1,12 @@
-import merge from 'lodash/merge';
-import ExtendableError from 'es6-error';
-import QueryString from 'querystring';
-import axios, { AxiosRequestConfig } from 'axios';
-import idx from 'idx';
 import { JSONObject, JSONValue } from '@expo/json-file';
+import axios, { AxiosRequestConfig } from 'axios';
+import ExtendableError from 'es6-error';
+import idx from 'idx';
+import merge from 'lodash/merge';
+import QueryString from 'querystring';
 
 import TurtleConfig from './TurtleConfig';
-import { FormData } from '@expo/xdl';
+
 
 // These aren't constants because some commands switch between staging and prod
 function _rootBaseUrl() {
@@ -21,7 +21,7 @@ function _apiBaseUrl() {
   return rootBaseUrl;
 }
 
-export class ApiV2Error extends ExtendableError {
+export class TurtleApiError extends ExtendableError {
   code: string;
   details?: JSONValue;
   serverStack?: string;
@@ -39,29 +39,40 @@ type RequestOptions = {
   body?: JSONObject;
 };
 
+export interface ProjectConfig {
+  data: Buffer;
+  headers: JSONObject;
+}
+
 type QueryParameters = { [key: string]: string | number | boolean | null | undefined };
 
-type APIV2ClientOptions = {
+type TurtleApiClientOptions = {
   sessionSecret?: string;
 };
 
-export default class ApiV2Client {
+export default class TurtleApiClient {
   static exponentClient: string = 'xdl';
   sessionSecret: string | null = null;
 
-  static clientForUser(user?: APIV2ClientOptions | null): ApiV2Client {
+  static clientForUser(user?: TurtleApiClientOptions | null): TurtleApiClient {
+    // TODO add auth token
     if (user && user.sessionSecret) {
-      return new ApiV2Client({ sessionSecret: user.sessionSecret });
+      return new TurtleApiClient({ sessionSecret: user.sessionSecret });
     }
-
-    return new ApiV2Client();
+    return new TurtleApiClient({
+      sessionSecret: JSON.stringify(
+        {
+          "userId": "85689f36-f570-459d-aca0-97e0e271283c",
+          "username": "turtle-v2-api-test-user"
+        }),
+    });
   }
 
   static setClientName(name: string) {
-    ApiV2Client.exponentClient = name;
+    TurtleApiClient.exponentClient = name;
   }
 
-  constructor(options: APIV2ClientOptions = {}) {
+  constructor(options: TurtleApiClientOptions = {}) {
     if (options.sessionSecret) {
       this.sessionSecret = options.sessionSecret;
     }
@@ -137,23 +148,19 @@ export default class ApiV2Client {
     methodName: string,
     options: RequestOptions,
     extraRequestOptions?: Partial<RequestOptions>,
-    returnEntireResponse: boolean = false
+    returnEntireResponse: boolean = false,
   ) {
     const url = `${_apiBaseUrl()}/${methodName}`;
     let reqOptions: AxiosRequestConfig = {
       url,
       method: options.httpMethod,
       headers: {
-        'fake-auth': JSON.stringify(
-          {
-            "userId": "85689f36-f570-459d-aca0-97e0e271283c",
-            "username": "turtle-v2-api-test-user"
-          }),
+        'fake-auth': null,
       },
     };
 
     if (this.sessionSecret) {
-      reqOptions.headers['Expo-Session'] = this.sessionSecret;
+      reqOptions.headers['fake-auth'] = this.sessionSecret;
     }
 
     // Handle qs
@@ -184,7 +191,7 @@ export default class ApiV2Client {
 
     if (result.errors && result.errors.length) {
       let responseError = result.errors[0];
-      let error = new ApiV2Error(responseError.message, responseError.code);
+      let error = new TurtleApiError(responseError.message, responseError.code);
       error.serverStack = responseError.stack;
       error.details = responseError.details;
       throw error;
@@ -193,26 +200,25 @@ export default class ApiV2Client {
     return returnEntireResponse ? response : result;
   }
 
-  async uploadProject(bodyFormData: FormData) {
+  async uploadFile(config: ProjectConfig) {
     const url = `${_apiBaseUrl()}/upload`;
+
     let reqOptions: AxiosRequestConfig = {
       method: 'post',
       url,
-      data: bodyFormData,
-      headers: {
-        'fake-auth': JSON.stringify(
-          {
-            "userId": "85689f36-f570-459d-aca0-97e0e271283c",
-            "username": "turtle-v2-api-test-user"
-          }),
-        'Content-Type': 'multipart/form-data',
-      },
+      data: config.data,
+      headers: config.headers,
     }
+
+    if (this.sessionSecret) {
+      reqOptions.headers['fake-auth'] = this.sessionSecret;
+    }
+
     let response;
     let result;
     try {
       response = await axios.request(reqOptions);
-      result = response.data;
+      result = response;
     } catch (e) {
       const maybeErrorData = idx(e, _ => _.response.data.errors.length);
       if (maybeErrorData) {
@@ -224,12 +230,14 @@ export default class ApiV2Client {
 
     if (result.errors && result.errors.length) {
       let responseError = result.errors[0];
-      let error = new ApiV2Error(responseError.message, responseError.code);
+      let error = new TurtleApiError(responseError.message, responseError.code);
       error.serverStack = responseError.stack;
       error.details = responseError.details;
       throw error;
     }
 
-    return result;
+    return result.data;
   }
+
+
 }
