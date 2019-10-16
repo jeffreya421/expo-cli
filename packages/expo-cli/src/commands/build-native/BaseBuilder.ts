@@ -50,7 +50,7 @@ export default class BaseBuilder {
   }
 
   async postBuild(projectDir: string, options: Options) {
-    const tarName = `${uuidv4()}-project.tar.gz`;
+    const tarName = `${uuidv4()}-project`;
     const tarPath = `/tmp/${tarName}`;
     try {
       const config = await this.prepareConfig(tarPath, projectDir);
@@ -79,12 +79,14 @@ export default class BaseBuilder {
     }
   }
 
-  async makeProjectTarball(projectPath: string, tarPath: string) {
+  async makeProjectTarball(projectDir: string, tarPath: string) {
     await tar.c({
       gzip: true,
       file: tarPath,
+      cwd: projectDir,
+      prefix: 'project',
     },
-      [projectPath]
+      ['.']
     );
   }
 

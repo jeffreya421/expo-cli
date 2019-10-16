@@ -208,6 +208,7 @@ export default class TurtleApiClient {
       url,
       data: config.data,
       headers: config.headers,
+      maxContentLength: config.data.byteLength
     }
 
     if (this.sessionSecret) {
