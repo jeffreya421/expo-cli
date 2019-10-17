@@ -2,6 +2,8 @@ import { Command } from 'commander';
 
 import log from '../../log';
 import BaseBuilder, { StatusResult } from './BaseBuilder';
+import { UserManager, User } from '@expo/xdl';
+import { wait } from './utils';
 
 export type Options = {
   platform: 'android' | 'ios';
@@ -10,15 +12,19 @@ export type Options = {
 
 
 async function buildAction(projectDir: string, options: Options) {
-  const builder = new BaseBuilder(projectDir, options);
+  const user: User = await UserManager.ensureLoggedInAsync();
+  const builder = new BaseBuilder(projectDir, user, options);
   const response = await builder.postBuild(projectDir, options);
-  log(response.buildRequestId);
+  const buildArtifactUrl = await wait(user, response.buildId);
+  log(`Artifact url: ${buildArtifactUrl}`);
 }
 
 async function statusAction(projectDir: string) {
+  const user: User = await UserManager.ensureLoggedInAsync();
   const builder = new BaseBuilder(projectDir);
-  const result: StatusResult = await builder.getStatus();
-  result.builds.map(build => log(`platform: ${build.platform}, status: ${build.status}`));
+  const result: StatusResult = await builder.getStatusOfLatestBuilds(user);
+  result.builds.map(build => log(`platform: ${build.platform},
+   status: ${build.status}, artifact url: ${build.artifacts ? build.artifacts.s3Url : 'not available'}.`));
 }
 
 export default function (program: Command) {

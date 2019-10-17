@@ -55,17 +55,11 @@ export default class TurtleApiClient {
   sessionSecret: string | null = null;
 
   static clientForUser(user?: TurtleApiClientOptions | null): TurtleApiClient {
-    // TODO add auth token
     if (user && user.sessionSecret) {
       return new TurtleApiClient({ sessionSecret: user.sessionSecret });
     }
-    return new TurtleApiClient({
-      sessionSecret: JSON.stringify(
-        {
-          "userId": "85689f36-f570-459d-aca0-97e0e271283c",
-          "username": "turtle-v2-api-test-user"
-        }),
-    });
+    return new TurtleApiClient(
+    );
   }
 
   static setClientName(name: string) {
@@ -155,12 +149,12 @@ export default class TurtleApiClient {
       url,
       method: options.httpMethod,
       headers: {
-        'fake-auth': null,
+        'Expo-Session': null,
       },
     };
 
     if (this.sessionSecret) {
-      reqOptions.headers['fake-auth'] = this.sessionSecret;
+      reqOptions.headers['Expo-Session'] = this.sessionSecret;
     }
 
     // Handle qs
@@ -212,7 +206,7 @@ export default class TurtleApiClient {
     }
 
     if (this.sessionSecret) {
-      reqOptions.headers['fake-auth'] = this.sessionSecret;
+      reqOptions.headers['Expo-Session'] = this.sessionSecret;
     }
 
     let response;
